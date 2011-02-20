@@ -1,0 +1,1 @@
+python domination.py -b g8_agent_1 -r g8_agent_1 -l clover2
