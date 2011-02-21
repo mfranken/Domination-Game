@@ -3,23 +3,23 @@ from game_object import GameObject
 import copy, math, pygame, utils, replay
 from pygame.locals import *
 import pygame
+import settings
 from settings import *
 
-# global constants for sound
+# global constants
 FREQ = 44100   # same as audio CD
 BITSIZE = -16  # unsigned 16 bit
 CHANNELS = 2   # 1 == mono, 2 == stereo
 BUFFER = 1024  # audio buffer size in no. of samples
 FRAMERATE = 30 # how often to check if playback has finished
-SOUND = False  # enable sound after initialisation
 
 try:
-    pygame.mixer.init(FREQ, BITSIZE, CHANNELS, BUFFER)
-    laser = pygame.mixer.Sound('sounds/laser.wav' )
-    monsterkill = pygame.mixer.Sound('sounds/monsterkill.wav' )
-    doublekill = pygame.mixer.Sound('sounds/doublekill.wav' )
-    godlike = pygame.mixer.Sound('sounds/godlike.wav' )
-    SOUND = True
+    if settings.SOUND :
+        pygame.mixer.init(FREQ, BITSIZE, CHANNELS, BUFFER)
+        laser = pygame.mixer.Sound('sounds/laser.wav' )
+        monsterkill = pygame.mixer.Sound('sounds/monsterkill.wav' )
+        doublekill = pygame.mixer.Sound('sounds/doublekill.wav' )
+        godlike = pygame.mixer.Sound('sounds/godlike.wav' )
 except pygame.error, exc:
     print >>sys.stderr, "Could not initialize sound system: %s" % exc
 
@@ -114,22 +114,21 @@ class AgentProxy(GameObject):
                 self.ammo -= 1
                 shot = ShootSprite(self.world, self)
                 self.world.shots.add(shot)
-                if SOUND :                    
+                if settings.SOUND :                    
                     laser.play()   
                 killed_agents = shot.killed_agents()
-                if len(killed_agents) > 1 and SOUND:
+                if len(killed_agents) > 1 and settings.SOUND:
                     doublekill.play()            
                 for killed_agent in killed_agents:
                     self.kills += 1
-                    if self.kills == 6 and SOUND:
+                    if self.kills == 6 and settings.SOUND:
                         print str(self),' got a monsterkill!!!'
                         monsterkill.play()  
-                    elif self.kills == 10 and SOUND:
+                    elif self.kills == 10 and settings.SOUND:
                         print str(self),' is godlike!!!'
                         godlike.play()  
                     if PRINT_DEBUG:
-#                        print str(killed_agent), "got killed by", str(self)                        
-                        pass
+                        print str(killed_agent), "got killed by", str(self)  
                     killed_agent.alive = False
                     self.team.stats["kills"] += 1                    
         

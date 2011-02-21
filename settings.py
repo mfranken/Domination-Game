@@ -2,6 +2,7 @@ import math, sys
 
 #debugging settings
 PRINT_DEBUG = True
+SOUND = True
 
 #global settings, should not change between games
 SIGHT = 100 #pixels of sight an agent has
@@ -21,5 +22,6 @@ MAX_TURN = math.pi/3 #the maximum turning angle of an agent in radians
 sys.path.append("brains") #add brains dir to path to easily import them
 sys.path.append("levels") #add levels dir to path to easily import them
 #settings that should be set by the command line
-RED_BRAIN = "random_agent"
-BLUE_BRAIN = "random_agent"
+RED_BRAIN = "claiming_agent"
+BLUE_BRAIN = "claiming_agent"
+
