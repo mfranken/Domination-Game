@@ -2,10 +2,32 @@ from __future__ import division
 from game_object import GameObject
 import copy, math, pygame, utils, replay
 from pygame.locals import *
+import pygame
 from settings import *
+
+# global constants for sound
+FREQ = 44100   # same as audio CD
+BITSIZE = -16  # unsigned 16 bit
+CHANNELS = 2   # 1 == mono, 2 == stereo
+BUFFER = 1024  # audio buffer size in no. of samples
+FRAMERATE = 30 # how often to check if playback has finished
+SOUND = False  # enable sound after initialisation
+
+try:
+    pygame.mixer.init(FREQ, BITSIZE, CHANNELS, BUFFER)
+    laser = pygame.mixer.Sound('sounds/laser.wav' )
+    monsterkill = pygame.mixer.Sound('sounds/monsterkill.wav' )
+    doublekill = pygame.mixer.Sound('sounds/doublekill.wav' )
+    godlike = pygame.mixer.Sound('sounds/godlike.wav' )
+    SOUND = True
+except pygame.error, exc:
+    print >>sys.stderr, "Could not initialize sound system: %s" % exc
+
 
 class AgentProxy(GameObject):
     """ Any agent that can move through the environment. """
+    kills = 0
+    
     def __init__(self, number, world, team):
         GameObject.__init__(self)
         self.collide = True
@@ -27,7 +49,7 @@ class AgentProxy(GameObject):
         self.label = ''
 
         self.alive = False
-        self.spawn()
+        self.spawn()        
     
     def spawn(self):
         """ set initial state of this agent """
@@ -36,6 +58,7 @@ class AgentProxy(GameObject):
         self.speed = 0
         self.ammo = self.world.level.DEFAULT_AMMO
         self.alive = True
+        self.kills = 0
         
         # Find a spawn point.
         # This loop might in theory take forever to return. In practice,
@@ -91,11 +114,24 @@ class AgentProxy(GameObject):
                 self.ammo -= 1
                 shot = ShootSprite(self.world, self)
                 self.world.shots.add(shot)
-                for killed_agent in shot.killed_agents():
+                if SOUND :                    
+                    laser.play()   
+                killed_agents = shot.killed_agents()
+                if len(killed_agents) > 1 and SOUND:
+                    doublekill.play()            
+                for killed_agent in killed_agents:
+                    self.kills += 1
+                    if self.kills == 6 and SOUND:
+                        print str(self),' got a monsterkill!!!'
+                        monsterkill.play()  
+                    elif self.kills == 10 and SOUND:
+                        print str(self),' is godlike!!!'
+                        godlike.play()  
                     if PRINT_DEBUG:
-                        print str(killed_agent), "got killed by", str(self)
+#                        print str(killed_agent), "got killed by", str(self)                        
+                        pass
                     killed_agent.alive = False
-                    self.team.stats["kills"] += 1
+                    self.team.stats["kills"] += 1                    
         
         if 'label' in action:
             self.label = action['label']
@@ -104,7 +140,8 @@ class AgentProxy(GameObject):
         """ move """
         if self.alive == False:
             if PRINT_DEBUG:
-                print str(self), "spawns"
+#                print str(self), "spawns"
+                pass
             self.spawn()
             return
         
@@ -158,7 +195,10 @@ class ShootSprite(pygame.sprite.DirtySprite):
         #set up images
         self.base_image = pygame.Surface((self.max_dist*2, self.max_dist*2)).convert_alpha()
         self.base_image.fill(pygame.Color(255,255,255,0)) #transparent
-        self.shot_color = pygame.Color(255,0,0,255) #red
+        if self.agent.team.name == 'Red' :
+            self.shot_color = pygame.Color(255,0,0,255) #red
+        else :
+            self.shot_color = pygame.Color(0,0,255,255) #Blue
         self.rect = self.base_image.get_rect()
         self.rect.center = self.agent.rect.center
         self.image = None
